@@ -17,7 +17,9 @@ class TableauPile extends PositionComponent implements Pile {
   //#region Pile API
 
   @override
-  bool canMoveCard(Card card) => card.isFaceUp;
+  bool canMoveCard(Card card, MoveMethod method) =>
+      card.isFaceUp && (method == MoveMethod.drag || card == _cards.last);
+  // Drag can move multiple cards: tap can move last card only (to Foundation).
 
   @override
   bool canAcceptCard(Card card) {
@@ -31,12 +33,13 @@ class TableauPile extends PositionComponent implements Pile {
   }
 
   @override
-  void removeCard(Card card) {
+  void removeCard(Card card, MoveMethod method) {
     assert(_cards.contains(card) && card.isFaceUp);
     final index = _cards.indexOf(card);
     _cards.removeRange(index, _cards.length);
     if (_cards.isNotEmpty && _cards.last.isFaceDown) {
       flipTopCard();
+      return;
     }
     layOutCards();
   }
@@ -57,22 +60,59 @@ class TableauPile extends PositionComponent implements Pile {
 
   //#endregion
 
-  void flipTopCard() {
+  void dropCards(Card firstCard, [List<Card> attachedCards = const []]) {
+    final cardList = [firstCard];
+    cardList.addAll(attachedCards);
+    Vector2 nextPosition = _cards.isEmpty ? position : _cards.last.position;
+    var nCardsToMove = cardList.length;
+    for (final card in cardList) {
+      card.pile = this;
+      card.priority = _cards.length;
+      if (_cards.isNotEmpty) {
+        nextPosition =
+            nextPosition + (card.isFaceDown ? _fanOffset1 : _fanOffset2);
+      }
+      _cards.add(card);
+      card.doMove(
+        nextPosition,
+        startPriority: card.priority,
+        onComplete: () {
+          nCardsToMove--;
+          if (nCardsToMove == 0) {
+            calculateHitArea(); // Expand the hit-area.
+          }
+        },
+      );
+    }
+  }
+
+  void flipTopCard({double start = 0.1}) {
     assert(_cards.last.isFaceDown);
-    _cards.last.flip();
+    _cards.last.turnFaceUp(
+      start: start,
+      onComplete: layOutCards,
+    );
   }
 
   void layOutCards() {
     if (_cards.isEmpty) {
+      calculateHitArea(); // Shrink hit-area when all cards have been removed.
       return;
     }
     _cards[0].position.setFrom(position);
+    _cards[0].priority = 0;
     for (var i = 1; i < _cards.length; i++) {
+      _cards[i].priority = i;
       _cards[i].position
         ..setFrom(_cards[i - 1].position)
         ..add(_cards[i - 1].isFaceDown ? _fanOffset1 : _fanOffset2);
     }
-    height = KlondikeGame.cardHeight * 1.5 + _cards.last.y - _cards.first.y;
+    calculateHitArea(); // Adjust hit-area to more cards or fewer cards.
+  }
+
+  void calculateHitArea() {
+    height = KlondikeGame.cardHeight * 1.5 +
+        (_cards.length < 2 ? 0.0 : _cards.last.y - _cards.first.y);
   }
 
   List<Card> cardsOnTop(Card card) {

@@ -1,14 +1,15 @@
 import 'dart:ui';
 
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 
 import '../common/general_pile.dart';
 import '../klondike_game.dart';
 import 'card.dart';
 import 'waste.dart';
 
-class StockPile extends PositionComponent with TapCallbacks implements Pile {
+class StockPile extends PositionComponent
+    with HasGameReference<KlondikeGame>
+    implements Pile {
   StockPile({super.position}) : super(size: KlondikeGame.cardSize);
 
   /// Which cards are currently placed onto this pile. The first card in the
@@ -18,16 +19,19 @@ class StockPile extends PositionComponent with TapCallbacks implements Pile {
   //#region Pile API
 
   @override
-  bool canMoveCard(Card card) => false;
+  bool canMoveCard(Card card, MoveMethod method) => false;
+  // Can be moved by onTapUp callback (see below).
 
   @override
   bool canAcceptCard(Card card) => false;
 
   @override
-  void removeCard(Card card) => throw StateError('cannot remove cards');
+  void removeCard(Card card, MoveMethod method) =>
+      throw StateError('cannot remove cards');
 
   @override
-  void returnCard(Card card) => throw StateError('cannot remove cards');
+  // Card cannot be removed but could have been dragged out of place.
+  void returnCard(Card card) => card.priority = _cards.indexOf(card);
 
   @override
   void acquireCard(Card card) {
@@ -40,20 +44,25 @@ class StockPile extends PositionComponent with TapCallbacks implements Pile {
 
   //#endregion
 
-  @override
-  void onTapUp(TapUpEvent event) {
+  void handleTapUp(Card card) {
     final wastePile = parent!.firstChild<WastePile>()!;
     if (_cards.isEmpty) {
+      assert(card.isBaseCard, 'Stock Pile is empty, but no Base Card present');
+      card.position = position; // Force Base Card (back) into correct position.
       wastePile.removeAllCards().reversed.forEach((card) {
         card.flip();
         acquireCard(card);
       });
     } else {
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < game.klondikeDraw; i++) {
         if (_cards.isNotEmpty) {
           final card = _cards.removeLast();
-          card.flip();
-          wastePile.acquireCard(card);
+          card.doMoveAndFlip(
+            wastePile.position,
+            whenDone: () {
+              wastePile.acquireCard(card);
+            },
+          );
         }
       }
     }
