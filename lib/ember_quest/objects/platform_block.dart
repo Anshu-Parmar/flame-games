@@ -25,9 +25,11 @@ class PlatformBlock extends SpriteComponent with HasGameReference<EmberQuestGame
 
   @override
   void update(double dt) {
+    super.update(dt);
     velocity.x = game.objectSpeed;
     position += velocity * dt;
-    if (position.x < -size.x) removeFromParent();
-    super.update(dt);
+    if (position.x < -size.x || game.health <= 0) {
+      removeFromParent();
+    }
   }
 }

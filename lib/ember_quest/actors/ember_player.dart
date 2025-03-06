@@ -19,9 +19,9 @@ class EmberPlayer extends SpriteAnimationComponent with KeyboardHandler, Collisi
   final double moveSpeed = 200;
   final Vector2 fromAbove = Vector2(0, -1);
   bool isOnGround = false;
-  final double gravity = 10;
-  final double jumpSpeed = 500;
-  final double terminalVelocity = 150;
+  final double gravity = 14.55;
+  final double jumpSpeed = 450;
+  final double terminalVelocity = 140;
 
   bool hasJumped = false;
   bool hitByEnemy = false;
@@ -53,6 +53,7 @@ class EmberPlayer extends SpriteAnimationComponent with KeyboardHandler, Collisi
 
   @override
   void update(double dt) {
+    super.update(dt);
     velocity.x = horizontalDirection * moveSpeed;
     position += velocity * dt;
     if (horizontalDirection < 0 && scale.x > 0) {
@@ -88,7 +89,15 @@ class EmberPlayer extends SpriteAnimationComponent with KeyboardHandler, Collisi
     }
 
     position += velocity * dt;
-    super.update(dt);
+
+    // If ember fell in pit, then game over.
+    if (position.y > game.size.y + size.y) {
+      game.health = 0;
+    }
+
+    if (game.health <= 0) {
+      removeFromParent();
+    }
   }
 
   @override
