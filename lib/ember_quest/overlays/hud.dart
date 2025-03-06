@@ -24,7 +24,7 @@ class Hud extends PositionComponent with HasGameReference<EmberQuestGame> {
       textRenderer: TextPaint(
         style: const TextStyle(
           fontSize: 32,
-          color: Color.fromRGBO(10, 10, 10, 1),
+          color: Color.fromRGBO(255, 255, 255, 1.0),
         ),
       ),
       anchor: Anchor.center,

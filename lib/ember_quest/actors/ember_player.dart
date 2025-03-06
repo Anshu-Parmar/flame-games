@@ -122,12 +122,18 @@ class EmberPlayer extends SpriteAnimationComponent with KeyboardHandler, Collisi
     if (other is WaterEnemy) {
       hit();
     }
+
+    if (other is Star) {
+      other.removeFromParent();
+      game.starsCollected++;
+    }
   }
 
   // This method runs an opacity effect on ember
-// to make it blink.
+  // to make it blink.
   void hit() {
     if (!hitByEnemy) {
+      game.health--;
       hitByEnemy = true;
     }
     add(
@@ -135,11 +141,11 @@ class EmberPlayer extends SpriteAnimationComponent with KeyboardHandler, Collisi
         EffectController(
           alternate: true,
           duration: 0.1,
-          repeatCount: 6,
+          repeatCount: 5,
         ),
       )..onComplete = () {
-          hitByEnemy = false;
-        },
+        hitByEnemy = false;
+      },
     );
   }
 }
