@@ -31,4 +31,14 @@ class SpaceShooterGame extends FlameGame with PanDetector {
   void onPanUpdate(DragUpdateInfo info) {
     player.move(info.delta.global);
   }
+
+  @override
+  void onPanStart(DragStartInfo info) {
+    player.startShooting();
+  }
+
+  @override
+  void onPanEnd(DragEndInfo info) {
+    player.stopShooting();
+  }
 }
