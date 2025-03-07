@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 
 import '../space_shooter.dart';
 
-class Player extends SpriteComponent with HasGameRef<SpaceShooterGame> {
+class Player extends SpriteAnimationComponent with HasGameRef<SpaceShooterGame> {
   Player() : super(
     size: Vector2(100, 150),
     anchor: Anchor.center,
@@ -12,10 +12,16 @@ class Player extends SpriteComponent with HasGameRef<SpaceShooterGame> {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    sprite = await gameRef.loadSprite('player-sprite.png');
+    animation = await game.loadSpriteAnimation(
+      'player.png',
+      SpriteAnimationData.sequenced(
+        amount: 4,
+        stepTime: .2,
+        textureSize: Vector2(32, 48),
+      ),
+    );
 
-    position = gameRef.size / 2;
-    anchor = Anchor.center;
+    position = game.size / 2;
   }
 
   void move(Vector2 delta) {
